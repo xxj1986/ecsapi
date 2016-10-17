@@ -17,3 +17,5 @@ $app->get('/', function () use ($app) {
 
 $app->get('login', 'AuthController@login');
 $app->get('logout', 'AuthController@logout');
+
+$app->get('test', 'ExampleController@test');

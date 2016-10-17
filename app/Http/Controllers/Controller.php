@@ -12,8 +12,8 @@ class Controller extends BaseController
 
     public function __construct()
     {
-        $dev = trim($_GET['device']);
-        $sign = trim($_GET['device']);
+        $dev = isset($_GET['device']) ? trim($_GET['device']) : '';
+        $sign = isset($_GET['sign']) ? trim($_GET['sign']) : '';
         if(!$dev || $sign){
             return response()->json(['errcode'=>1001,'message'=>'参数错误！']);
         }
