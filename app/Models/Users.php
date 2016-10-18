@@ -36,7 +36,7 @@ class Users extends Model
             'credit_line' => 800000, // 最大消费
         ];
         $data['mobile_phone'] = $params['mobile_phone'];
-        $data['password'] = md5($params['password']);
+        $data['password'] = $params['password'];
 
         return $this->insert($data);
     }

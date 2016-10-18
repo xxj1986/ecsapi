@@ -19,7 +19,7 @@ class Sign
          */
         $user_id = intval($request->input('user_id'));
         if($user_id){
-            $onlineDev = Redis::hget('device',$user_id);
+            $onlineDev = Redis::hget('id2dev',$user_id);
             if($dev !== $onlineDev){
                 return response()->json(['errcode'=>1,'message'=>'您已在其他设备登录']);
             }

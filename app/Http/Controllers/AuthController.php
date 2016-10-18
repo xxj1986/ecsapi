@@ -22,7 +22,8 @@ class AuthController extends Controller
         if( $user && md5($password) == $user->password ){
             $token = str_random(32);
             //绑定user_id和device
-            Redis::hset('device', $user->user_id, $this->dev);
+            Redis::hset('id2dev', $user->user_id, $this->dev);
+            Redis::hset('dev2id', $this->dev, $user->user_id);
             //保存token,设置超时时间20秒
             Redis::set('token'.$this->dev, $token);
             Redis::expire('token'.$this->dev, 20*60);
