@@ -43,7 +43,7 @@ class AuthController extends Controller
         //获取签名
         $sign = trim($request->input('sign'));
 
-        Redis::unset('token'.$this->dev);
+        Redis::del('token'.$this->dev);
 
         return response()->json(['errcode'=>0,'message'=>'退出成功']);
     }
@@ -68,10 +68,11 @@ class AuthController extends Controller
         if(!$mobile_phone){
             return response()->json(['errcode'=>2004,'message'=>'请输入手机号']);
         }
-        $match = '/^((13[0-9])|(15[^4,/d])|(18[0,5-9]))[0-9]{8}$/';
+        /*
+        $match = '/^((13[0-9])|(15[^4,\d])|(18[0,5-9]))[0-9]{8}$/';
         if(!preg_match($match, $mobile_phone)){
             return response()->json(['errcode'=>2005,'message'=>'手机号不正确']);
-        }
+        }*/
         $userModel = new Users();
         $userInfo = $userModel->getUserByMobile($mobile_phone);
         if($userInfo){

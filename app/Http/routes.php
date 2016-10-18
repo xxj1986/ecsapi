@@ -18,11 +18,12 @@ $app->get('/', function () use ($app) {
 $app->get('test', 'ExampleController@test');
 $app->get('test/md5', 'ExampleController@md5');
 $app->get('test/model', 'ExampleController@model');
+$app->get('argtest', 'ExampleController@argshow');
 //以上为测试
 
 $app->group(['prefix' => 'auth','middleware' => 'auth','namespace' => 'App\Http\Controllers'], function () use ($app) {
     //登录
-    $app->get('login', 'AuthController@login');
+    $app->post('login', 'AuthController@login');
     $app->get('logout', 'AuthController@logout');
     //图片验证码
     $app->get('createCaptcha', 'AuthController@createCaptcha');
@@ -34,6 +35,5 @@ $app->group(['prefix' => 'auth','middleware' => 'auth','namespace' => 'App\Http\
 $app->group(['middleware' => 'sign','namespace' => 'App\Http\Controllers'], function () use ($app) {
     //登录
     $app->post('argtest', 'ExampleController@argtest');
-    $app->get('argtest', 'ExampleController@argshow');
 });
 

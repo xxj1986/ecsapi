@@ -29,7 +29,7 @@ class Sign
             return response()->json(['errcode'=>1001,'message'=>'参数错误！']);
         }
         //判断是否已经登陆或超时退出
-        $token = Redis::hget('token',$dev);
+        $token = Redis::get('token'.$dev);
         if(!$token || strlen($token) != 32){
             return response()->json(['errcode'=>2001,'message'=>'请重新登录']);
         }

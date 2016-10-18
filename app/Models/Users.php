@@ -12,7 +12,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Users extends Model
 {
-    protected $table='users';
+    protected $table = 'users';
+    public $timestamps = false; //关闭自动更新
 
     //根据手机号查询用户信息
     public function getUserByMobile($mobile){
