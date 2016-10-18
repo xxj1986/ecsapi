@@ -3,8 +3,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Redis;
 use Gregwar\Captcha\CaptchaBuilder;
+use \App\Models\Users;
 
 class ExampleController extends Controller
 {
@@ -16,6 +16,30 @@ class ExampleController extends Controller
         $captcha->build();
 
         return '<img src="'.$captcha->inline().'" />'.$captcha->getPhrase();
+
+    }
+
+    public function md5(){
+        dd(md5('ruowano1'));
+    }
+
+    public function model(){
+        $userModel = new Users();
+        $params = [
+            'mobile_phone'=>'13811986573',
+            'password' => 'ruowano1'
+        ];
+        $res = $userModel->createUser($params);
+        dd($res);
+    }
+    public function argshow(){
+        $str = '<form method="post">';
+        $str .= '<input type="text" name="name" value="value">';
+        $str .= '<input type="text" name="key" value="val">';
+        $str .= '<input type="text" name="id" value="10086">';
+        $str .= '<button>提交</button>';
+        $str .= '</form>';
+        return $str;
 
     }
 

@@ -5,30 +5,19 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Redis;
 use Gregwar\Captcha\CaptchaBuilder;
 use Illuminate\Http\Request;
-use DB;
-use Laravel\Lumen\Routing\Controller as BaseController;
+use App\Models\Users;
 
-class AuthController extends BaseController
+class AuthController extends Controller
 {
-    protected $dev;
-
-    public function __construct()
-    {
-        $dev = isset($_GET['device']) ? trim($_GET['device']) : '';
-        if(!$dev){
-            return response()->json(['errcode'=>1001,'message'=>'参数错误！']);
-        }
-        $token = Redis::hget('token',$dev);
-        if(strlen($token) == 32){
-            return response()->json(['errcode'=>2002,'message'=>'您已登录']);
-        }
-        $this->dev = $dev;
-    }
-
     /*
      * 登录
      */
     public function login(Request $request){
+        dd($this->dev);
+        $token = Redis::hget('token',$this->dev);
+        if(strlen($token) == 32){
+            return response()->json(['errcode'=>2002,'message'=>'您已登录']);
+        }
         //获取用户名和密码
         $user_mobile = $request->input('user_mobile');
         $password = $request->input('password');
@@ -72,17 +61,6 @@ class AuthController extends BaseController
         $mobile_phone = $request->input('mobile_phone');
         $password = $request->input('password');
         $captcha = $request->input('captcha');
-        //检查手机号
-        if(!$mobile_phone){
-            return response()->json(['errcode'=>2004,'message'=>'请输入手机号']);
-        }
-        if(false){
-            return response()->json(['errcode'=>2005,'message'=>'手机号不正确']);
-        }
-        //检查密码
-        if(!$password){
-            return response()->json(['errcode'=>2006,'message'=>'请输入密码']);
-        }
         //检查验证码
         if(!$captcha){
             return response()->json(['errcode'=>2008,'message'=>'请输入验证码']);
@@ -91,11 +69,27 @@ class AuthController extends BaseController
         if($captcha != $cap){
             return response()->json(['errcode'=>2009,'message'=>'验证码错误']);
         }
+        //检查手机号
+        if(!$mobile_phone){
+            return response()->json(['errcode'=>2004,'message'=>'请输入手机号']);
+        }
+        $match = '/^((13[0-9])|(15[^4,/d])|(18[0,5-9]))[0-9]{8}$/';
+        if(!preg_match($match, $mobile_phone)){
+            return response()->json(['errcode'=>2005,'message'=>'手机号不正确']);
+        }
+        $userModel = new Users();
+        $userInfo = $userModel->getUserByMobile($mobile_phone);
+        if($userInfo){
+            return response()->json(['errcode'=>2006,'message'=>'该手机号已注册']);
+        }
+        //检查密码
+        if(!$password){
+            return response()->json(['errcode'=>2007,'message'=>'请输入密码']);
+        }
         Redis::hset('regMobile',$this->dev,$mobile_phone);
         Redis::hset('regPass',$this->dev,$password);
 
         //发送短信验证码
-        // 代码
         return response()->json(['errcode'=>0,'message'=>'提交信息成功']);
     }
 
@@ -108,17 +102,34 @@ class AuthController extends BaseController
             return response()->json(['errcode'=>2008,'message'=>'请输入短信验证码']);
         }
         //将临时数据写入数据库
+        $userModel = new Users();
+        $data = [
+            'mobile_phone' => Redis::hget('regMobile',$this->dev),
+            'password' => Redis::hget('regPass',$this->dev),
+        ];
+        $res = $userModel->createUser($data);
+        if(!$res){
+            return response()->json(['errcode'=>2009,'message'=>'注册失败']);
+        }
         return response()->json(['errcode'=>0,'message'=>'注册成功']);
     }
 
     /*
      * 创建验证码
      */
-    public function createCode(){
+    public function createCaptcha(){
 
         $captcha = new CaptchaBuilder();
         $captcha->build();
         Redis::hset('captcha',$this->dev,$captcha->getPhrase());
         return '<img src="'.$captcha->inline().'" />';
     }
+
+    /*
+     * 检测手机号
+     */
+    public function checkMobile($mobile){
+        //考虑到安全，该接口暂时不开放。
+    }
+
 }

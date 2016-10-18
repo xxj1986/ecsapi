@@ -15,7 +15,25 @@ $app->get('/', function () use ($app) {
     return $app->version();
 });
 
-$app->get('login', 'AuthController@login');
-$app->get('logout', 'AuthController@logout');
-
 $app->get('test', 'ExampleController@test');
+$app->get('test/md5', 'ExampleController@md5');
+$app->get('test/model', 'ExampleController@model');
+//以上为测试
+
+$app->group(['prefix' => 'auth','middleware' => 'auth','namespace' => 'App\Http\Controllers'], function () use ($app) {
+    //登录
+    $app->get('login', 'AuthController@login');
+    $app->get('logout', 'AuthController@logout');
+    //图片验证码
+    $app->get('createCaptcha', 'AuthController@createCaptcha');
+    //注册
+    $app->post('register', 'AuthController@register');
+    $app->post('confirm', 'AuthController@confirm');
+});
+
+$app->group(['middleware' => 'sign','namespace' => 'App\Http\Controllers'], function () use ($app) {
+    //登录
+    $app->post('argtest', 'ExampleController@argtest');
+    $app->get('argtest', 'ExampleController@argshow');
+});
+

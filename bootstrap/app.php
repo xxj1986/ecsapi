@@ -63,9 +63,10 @@ $app->singleton(
 //    App\Http\Middleware\ExampleMiddleware::class
 // ]);
 
-// $app->routeMiddleware([
-//     'auth' => App\Http\Middleware\Authenticate::class,
-// ]);
+ $app->routeMiddleware([
+     'auth' => App\Http\Middleware\Auth::class,
+     'sign' => App\Http\Middleware\Sign::class,
+ ]);
 
 /*
 |--------------------------------------------------------------------------
