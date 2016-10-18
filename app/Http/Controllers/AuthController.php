@@ -13,18 +13,23 @@ class AuthController extends Controller
      * 登录
      */
     public function login(Request $request){
-        dd($this->dev);
-        $token = Redis::hget('token',$this->dev);
-        if(strlen($token) == 32){
-            return response()->json(['errcode'=>2002,'message'=>'您已登录']);
-        }
         //获取用户名和密码
         $user_mobile = $request->input('user_mobile');
         $password = $request->input('password');
-        if($user_mobile == 138111 && $password == 123){
+        //获取
+        $userModel = new Users();
+        $user = $userModel->getUserByMobile($user_mobile);
+        if( $user && md5($password) == $user->password ){
             $token = str_random(32);
-            $res = Redis::hset('token',$this->dev,$token);
-            return response()->json(['errcode'=>0,'message'=>'登录成功','token'=>$token]);
+            //绑定user_id和device
+            Redis::hset('device', $user->user_id, $this->dev);
+            //保存token,设置超时时间20秒
+            Redis::set('token'.$this->dev, $token);
+            Redis::expire('token'.$this->dev, 20*60);
+            //更新最后登陆时间
+            $userModel->where('user_id',$user->user_id)->update(['last_login'=>time()]);
+            //返回user_id,token
+            return response()->json(['errcode'=>0,'message'=>'登录成功','user_id'=>$user->user_id,'token'=>$token]);
         }else{
             return response()->json(['errcode'=>2002,'message'=>'账号或密码错误！']);
         }
@@ -37,20 +42,9 @@ class AuthController extends Controller
         //获取签名
         $sign = trim($request->input('sign'));
 
-        $data = ['errcode'=>0,'message'=>'退出成功'];
+        Redis::unset('token'.$this->dev);
 
-        $token = Redis::hget('token',$this->dev);
-
-        if(!$token){ // 没有登录或已超时
-            return response()->json($data);
-        }
-        $checkSign = md5($this->dev.$token);
-        if($checkSign == $sign){ //验证通过
-            //Redis::unset('token',$dev);
-            return response()->json($data);
-        }
-        // 验证没有通过
-        return response()->json(['errcode'=>2003,'message'=>'您是真人吗？']);
+        return response()->json(['errcode'=>0,'message'=>'退出成功']);
     }
 
     /*
@@ -65,7 +59,7 @@ class AuthController extends Controller
         if(!$captcha){
             return response()->json(['errcode'=>2008,'message'=>'请输入验证码']);
         }
-        $cap = Redis::hget('captcha',$this->dev);
+        $cap = Redis::get('captcha'.$this->dev);
         if($captcha != $cap){
             return response()->json(['errcode'=>2009,'message'=>'验证码错误']);
         }
@@ -86,8 +80,11 @@ class AuthController extends Controller
         if(!$password){
             return response()->json(['errcode'=>2007,'message'=>'请输入密码']);
         }
-        Redis::hset('regMobile',$this->dev,$mobile_phone);
-        Redis::hset('regPass',$this->dev,$password);
+        // 存redis并设置过期时间
+        Redis::set('regMobile'.$this->dev, $mobile_phone);
+        Redis::set('regPass'.$this->dev, md5($password));
+        Redis::expire('regMobile'.$this->dev, 10*60);
+        Redis::expire('regPass'.$this->dev, 10*60);
 
         //发送短信验证码
         return response()->json(['errcode'=>0,'message'=>'提交信息成功']);
@@ -101,15 +98,19 @@ class AuthController extends Controller
         if(!$code){
             return response()->json(['errcode'=>2008,'message'=>'请输入短信验证码']);
         }
-        //将临时数据写入数据库
-        $userModel = new Users();
         $data = [
-            'mobile_phone' => Redis::hget('regMobile',$this->dev),
-            'password' => Redis::hget('regPass',$this->dev),
+            'mobile_phone' => Redis::get('regMobile'.$this->dev),
+            'password' => Redis::get('regPass'.$this->dev),
         ];
+        //验证是否超时
+        if(!$data['mobile_phone']){
+            return response()->json(['errcode'=>2,'message'=>'验证超时,请重新注册']);
+        }
+        //将信息保存到数据库
+        $userModel = new Users();
         $res = $userModel->createUser($data);
         if(!$res){
-            return response()->json(['errcode'=>2009,'message'=>'注册失败']);
+            return response()->json(['errcode'=>2,'message'=>'注册失败']);
         }
         return response()->json(['errcode'=>0,'message'=>'注册成功']);
     }
@@ -118,10 +119,13 @@ class AuthController extends Controller
      * 创建验证码
      */
     public function createCaptcha(){
-
+        //创建验证码
         $captcha = new CaptchaBuilder();
         $captcha->build();
-        Redis::hset('captcha',$this->dev,$captcha->getPhrase());
+        //将验证码保存到缓存
+        Redis::set('captcha'.$this->dev, $captcha->getPhrase());
+        Redis::expire('captcha'.$this->dev, 10*60);
+        //输出验证码图片
         return '<img src="'.$captcha->inline().'" />';
     }
 
@@ -130,6 +134,7 @@ class AuthController extends Controller
      */
     public function checkMobile($mobile){
         //考虑到安全，该接口暂时不开放。
+        // 非法用户可能根据这个接口来探测注册的手机号。
     }
 
 }

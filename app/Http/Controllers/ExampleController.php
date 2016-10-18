@@ -33,6 +33,7 @@ class ExampleController extends Controller
         dd($res);
     }
     public function argshow(){
+
         $str = '<form method="post">';
         $str .= '<input type="text" name="name" value="value">';
         $str .= '<input type="text" name="key" value="val">';
@@ -41,6 +42,15 @@ class ExampleController extends Controller
         $str .= '</form>';
         return $str;
 
+    }
+
+    public function redisExp(){
+        if(Redis::hget('hello','key')){
+            Redis::expire('hello','key',60);
+        }else{
+            Redis::hset('hello','key','666',60);
+        }
+        return 'OK';
     }
 
     //
