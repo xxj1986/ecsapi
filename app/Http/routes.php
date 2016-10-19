@@ -19,6 +19,7 @@ $app->get('test', 'ExampleController@test');
 $app->get('test/md5', 'ExampleController@md5');
 $app->get('test/model', 'ExampleController@model');
 $app->get('argtest', 'ExampleController@argshow');
+$app->get('serial', 'ExampleController@serial');
 //以上为测试
 
 $app->group(['prefix' => 'auth','middleware' => 'auth','namespace' => 'App\Http\Controllers'], function () use ($app) {

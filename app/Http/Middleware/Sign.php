@@ -36,8 +36,10 @@ class Sign
         //计算签名
         $data = $request->except('sign'); // 获取数据，排除签名
         $data['token'] = $token; // 加入token
+        foreach($data as $k=>$v) $data[$k] = $k.'='.$v; //内容变成key=value
         ksort($data); // 按照key升序排序
-        $correctSign = md5(json_encode($data)); // json序列化，并md5哈希
+        $str = implode('&',$data); // 序列化
+        $correctSign = md5($str); // md5哈希
         //判断签名
         if($sign != $correctSign){
             return response()->json(['errcode'=>1002,'message'=>'数字签名错误！']);

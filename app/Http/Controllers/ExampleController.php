@@ -70,5 +70,20 @@ class ExampleController extends Controller
         return 'OK';
     }
 
+    public function serial(){
+        $data = [
+            'name' => 'value',
+            'key'  => 'val',
+            'id'   => '10086',
+            'token'=> '12ed31e12',
+            'device' => '1q2w3e'
+        ];
+        foreach($data as $k=>$v) $data[$k] = $k.'='.$v;
+        ksort($data); // 按照key升序排序
+        $str = implode('&',$data); // 序列化
+        $correctSign = md5($str); // md5哈希
+        dd($str);
+    }
+
     //
 }
